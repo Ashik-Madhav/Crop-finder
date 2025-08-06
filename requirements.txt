@@ -1,4 +1,5 @@
-flask
+Flask
 tensorflow
-pillow
 numpy
+opencv-python
+werkzeug
