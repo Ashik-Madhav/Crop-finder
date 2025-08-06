@@ -3,7 +3,6 @@ import json
 import cv2
 import numpy as np
 import tensorflow as tf
-import requests
 from flask import Flask, request, render_template, redirect
 from werkzeug.utils import secure_filename
 
@@ -13,48 +12,11 @@ UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Google Drive file ID for your model
-GOOGLE_DRIVE_FILE_ID = '1MVPWJK71yKIdM9xZDTMtp_Oo9pYQfSL5'
-MODEL_PATH = "crop_classification_model.h5"
-
-def download_file_from_google_drive(id, destination):
-    URL = "https://docs.google.com/uc?export=download"
-
-    session = requests.Session()
-
-    response = session.get(URL, params={'id': id}, stream=True)
-    token = get_confirm_token(response)
-
-    if token:
-        params = {'id': id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-
-    save_response_content(response, destination)
-
-def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-    return None
-
-def save_response_content(response, destination):
-    CHUNK_SIZE = 32768
-
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
-            if chunk:
-                f.write(chunk)
-
-# Download model if not present
-if not os.path.exists(MODEL_PATH):
-    print("Downloading model from Google Drive...")
-    download_file_from_google_drive(GOOGLE_DRIVE_FILE_ID, MODEL_PATH)
-    print("Download completed.")
-
 # Load the model
+model_save_path = "crop_classification_model.h5"
 try:
-    model = tf.keras.models.load_model(MODEL_PATH)
-    print(f"Model loaded successfully from {MODEL_PATH}")
+    model = tf.keras.models.load_model(model_save_path)
+    print(f"Model loaded successfully from {model_save_path}")
 except Exception as e:
     print(f"Error loading model: {e}")
     model = None
@@ -114,4 +76,5 @@ def predict():
         return render_template('result.html', prediction=f"Error: {e}", info="")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Get port from Render or default 5000
+    app.run(host='0.0.0.0', port=port)
