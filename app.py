@@ -1,72 +1,79 @@
-from flask import Flask, request, jsonify, render_template_string
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-import numpy as np
-from PIL import Image
 import os
 import json
+import cv2
+import numpy as np
+import tensorflow as tf
+from flask import Flask, request, render_template, redirect
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# Load the model
-MODEL_PATH = 'crop_classification_model.h5'
-model = load_model(MODEL_PATH)
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-# Load crop info from JSON
+# Load the model
+model_save_path = "crop_classification_model.h5"
+try:
+    model = tf.keras.models.load_model(model_save_path)
+    print(f"Model loaded successfully from {model_save_path}")
+except Exception as e:
+    print(f"Error loading model: {e}")
+    model = None
+
+# Load crop info JSON
 with open('crop_info.json', 'r') as f:
     crop_info = json.load(f)
 
-# Crop class names
-CROP_CLASSES = ['Apple', 'Banana', 'Cotton', 'Grapes', 'Jute', 'Maize',
-                'Mango', 'Millets', 'Orange', 'Paddy', 'Papaya', 'Sugarcane',
-                'Tea', 'Tomato', 'Wheat']
+# Crop names (order must match model's output classes)
+crop_names = ['Apple', 'Banana', 'Cotton', 'Grapes', 'Jute', 'Maize',
+              'Mango', 'Millets', 'Orange', 'Paddy', 'Papaya', 'Sugarcane',
+              'Tea', 'Tomato', 'Wheat']
 
-# HTML UI
-HTML_TEMPLATE = '''
-<!doctype html>
-<title>Crop Identifier</title>
-<h1>Upload an image to identify the crop</h1>
-<form method=post enctype=multipart/form-data>
-  <input type=file name=file>
-  <input type=submit value=Upload>
-</form>
-{% if prediction %}
-<h2>Prediction: {{ prediction }}</h2>
-<h3>Scientific Name: {{ info.scientific_name }}</h3>
-<h3>Season: {{ info.season }}</h3>
-<h3>Growth Duration: {{ info.growth_duration }}</h3>
-<h3>Climate:</h3>
-<ul>
-    <li>Temperature: {{ info.climate.temperature }}</li>
-    <li>Rainfall: {{ info.climate.rainfall }}</li>
-    <li>Soil Type: {{ info.climate.soil_type }}</li>
-</ul>
-{% endif %}
-'''
+img_height, img_width = 224, 224
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    prediction = None
-    info = None
-    if request.method == 'POST':
-        file = request.files['file']
-        if file:
-            # Process image
-            image = Image.open(file).resize((224, 224)).convert('RGB')
-            img_array = np.array(image) / 255.0
-            img_array = np.expand_dims(img_array, axis=0)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-            # Predict
-            prediction_index = np.argmax(model.predict(img_array))
-            prediction = CROP_CLASSES[prediction_index]
+@app.route('/predict', methods=['POST'])
+def predict():
+    if model is None:
+        return render_template('result.html', prediction="Model not loaded.", info="")
 
-            # Get crop info
-            for crop in crop_info["crops"]:
-                if crop["name"].lower() == prediction.lower():
-                    info = crop
-                    break
+    if 'file' not in request.files:
+        return render_template('result.html', prediction="No file part in the request.", info="")
 
-    return render_template_string(HTML_TEMPLATE, prediction=prediction, info=info)
+    file = request.files['file']
+
+    if file.filename == '':
+        return render_template('result.html', prediction="No selected file.", info="")
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(filepath)
+
+    try:
+        img = cv2.imread(filepath)
+        if img is None:
+            return render_template('result.html', prediction="Could not read image.", info="")
+
+        img = cv2.resize(img, (img_width, img_height))
+        img = np.expand_dims(img, axis=0)
+
+        predictions = model.predict(img)
+        predicted_class_index = np.argmax(predictions)
+        predicted_crop = crop_names[predicted_class_index]
+
+        info = crop_info.get(predicted_crop, {})
+        info_text = ""
+        for k, v in info.items():
+            info_text += f"<b>{k.replace('_', ' ').title()}:</b> {v}<br>"
+
+        return render_template('result.html', prediction=predicted_crop, info=info_text)
+
+    except Exception as e:
+        return render_template('result.html', prediction=f"Error: {e}", info="")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
+    app.run(debug=True)
