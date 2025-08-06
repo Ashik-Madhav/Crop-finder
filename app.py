@@ -3,29 +3,48 @@ import json
 import cv2
 import numpy as np
 import tensorflow as tf
-from flask import Flask, request, render_template, redirect
+from flask import Flask, request, render_template
 from werkzeug.utils import secure_filename
+import requests
 
 app = Flask(__name__)
-
 UPLOAD_FOLDER = 'uploads'
+MODEL_PATH = 'crop_classification_model.h5'
+MODEL_URL = 'https://drive.google.com/uc?id=1MVPWJK71yKIdM9xZDTMtp_Oo9pYQfSL5'
+
+# Ensure upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Load the model
-model_save_path = "crop_classification_model.h5"
+# Download the model if not already present
+def download_model():
+    if not os.path.exists(MODEL_PATH):
+        print("Downloading model from Google Drive...")
+        try:
+            response = requests.get(MODEL_URL)
+            with open(MODEL_PATH, 'wb') as f:
+                f.write(response.content)
+            print("Download completed.")
+        except Exception as e:
+            print(f"Failed to download model: {e}")
+
+# Download and load the model
+download_model()
 try:
-    model = tf.keras.models.load_model(model_save_path)
-    print(f"Model loaded successfully from {model_save_path}")
+    model = tf.keras.models.load_model(MODEL_PATH)
+    print("Model loaded successfully.")
 except Exception as e:
     print(f"Error loading model: {e}")
     model = None
 
-# Load crop info JSON
-with open('crop_info.json', 'r') as f:
-    crop_info = json.load(f)
+# Load crop information
+try:
+    with open('crop_info.json', 'r') as f:
+        crop_info = json.load(f)
+except:
+    crop_info = {}
 
-# Crop names (order must match model's output classes)
+# Crop class labels (must match model training order)
 crop_names = ['Apple', 'Banana', 'Cotton', 'Grapes', 'Jute', 'Maize',
               'Mango', 'Millets', 'Orange', 'Paddy', 'Papaya', 'Sugarcane',
               'Tea', 'Tomato', 'Wheat']
@@ -42,12 +61,11 @@ def predict():
         return render_template('result.html', prediction="Model not loaded.", info="")
 
     if 'file' not in request.files:
-        return render_template('result.html', prediction="No file part in the request.", info="")
+        return render_template('result.html', prediction="No file uploaded.", info="")
 
     file = request.files['file']
-
     if file.filename == '':
-        return render_template('result.html', prediction="No selected file.", info="")
+        return render_template('result.html', prediction="No file selected.", info="")
 
     filename = secure_filename(file.filename)
     filepath = os.path.join(UPLOAD_FOLDER, filename)
@@ -56,15 +74,17 @@ def predict():
     try:
         img = cv2.imread(filepath)
         if img is None:
-            return render_template('result.html', prediction="Could not read image.", info="")
+            return render_template('result.html', prediction="Invalid image format.", info="")
 
         img = cv2.resize(img, (img_width, img_height))
+        img = img / 255.0  # Normalize image
         img = np.expand_dims(img, axis=0)
 
         predictions = model.predict(img)
-        predicted_class_index = np.argmax(predictions)
-        predicted_crop = crop_names[predicted_class_index]
+        predicted_index = np.argmax(predictions)
+        predicted_crop = crop_names[predicted_index]
 
+        # Get crop info
         info = crop_info.get(predicted_crop, {})
         info_text = ""
         for k, v in info.items():
@@ -76,4 +96,4 @@ def predict():
         return render_template('result.html', prediction=f"Error: {e}", info="")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
+    app.run(debug=True)
