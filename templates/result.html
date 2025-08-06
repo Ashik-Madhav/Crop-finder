@@ -1,10 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Prediction Result</title>
-</head>
-<body>
-    <h1>Predicted Crop: {{ prediction }}</h1>
-    <a href="/">Try Another</a>
-</body>
-</html>
+<!doctype html>
+<title>Prediction Result</title>
+<h1>Prediction Result</h1>
+<p><strong>Predicted Crop:</strong> {{ prediction }}</p>
+{% if info %}
+<div>
+  <h3>Crop Information:</h3>
+  <p>{{ info | safe }}</p>
+</div>
+{% endif %}
+<p><a href="/">Upload another image</a></p>
