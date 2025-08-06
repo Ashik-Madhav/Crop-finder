@@ -1,5 +1,6 @@
-Flask
 tensorflow
-numpy
+flask
 opencv-python
-werkzeug
+pillow
+scikit-learn
+requests
