@@ -1,36 +1,56 @@
-from flask import Flask, render_template, request
-from keras.models import load_model
-import numpy as np
-from PIL import Image
 import os
+import requests
+import numpy as np
+import tensorflow as tf
+from flask import Flask, request, jsonify
+from PIL import Image
 
 app = Flask(__name__)
-model = load_model("crop_classification_model.h5")
-class_names = ['Apple', 'Banana', 'Corn', 'Cotton', 'Grapes', 'Jute', 'Maize', 'Mango', 'Millets', 'Orange', 'Rice', 'Sugarcane', 'Tea', 'Wheat', 'Watermelon']
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+MODEL_PATH = "crop_classification_model.h5"
+DRIVE_URL = "https://drive.google.com/uc?export=download&id=1MVPWJK71yKIdM9xZDTMtp_Oo9pYQfSL5"
 
-@app.route('/predict', methods=['POST'])
+# Automatically download the model if not present
+if not os.path.exists(MODEL_PATH):
+    print("Downloading model from Google Drive...")
+    response = requests.get(DRIVE_URL, timeout=120)
+    response.raise_for_status()
+    with open(MODEL_PATH, "wb") as f:
+        f.write(response.content)
+    print("Model downloaded successfully.")
+
+# Load the model
+model = tf.keras.models.load_model(MODEL_PATH)
+
+# Define class names
+class_names = [
+    "Apple", "Banana", "Brinjal", "Cabbage", "Carrot",
+    "Cauliflower", "Chili", "Corn", "Cucumber", "Onion",
+    "Potato", "Rice", "Soybean", "Tomato", "Wheat"
+]
+
+def preprocess_image(image):
+    image = image.resize((224, 224))
+    image_array = np.array(image) / 255.0
+    image_array = np.expand_dims(image_array, axis=0)
+    return image_array
+
+@app.route("/predict", methods=["POST"])
 def predict():
-    if 'image' not in request.files:
-        return "No image uploaded", 400
-    file = request.files['image']
-    if file.filename == '':
-        return "No image selected", 400
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
 
-    img_path = os.path.join('uploads', file.filename)
-    file.save(img_path)
+    file = request.files["file"]
+    image = Image.open(file.stream).convert("RGB")
+    processed_image = preprocess_image(image)
+    predictions = model.predict(processed_image)
+    predicted_class = class_names[np.argmax(predictions)]
 
-    img = Image.open(img_path).resize((224, 224))
-    img = np.array(img) / 255.0
-    img = np.expand_dims(img, axis=0)
+    return jsonify({"predicted_crop": predicted_class})
 
-    prediction = model.predict(img)
-    predicted_class = class_names[np.argmax(prediction)]
+@app.route("/", methods=["GET"])
+def home():
+    return "Crop Identifier is running!"
 
-    return render_template('result.html', prediction=predicted_class)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
