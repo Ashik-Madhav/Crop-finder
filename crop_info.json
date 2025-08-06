@@ -1,0 +1,107 @@
+{
+  "Apple": {
+    "scientific_name": "Malus domestica",
+    "season": "Fall",
+    "growth_duration": "4-6 months",
+    "climate": "Temperate",
+    "description": "Apple trees require well-drained soil and moderate rainfall."
+  },
+  "Banana": {
+    "scientific_name": "Musa spp.",
+    "season": "Year-round",
+    "growth_duration": "9-12 months",
+    "climate": "Tropical",
+    "description": "Bananas grow best in warm, humid climates with rich soil."
+  },
+  "Cotton": {
+    "scientific_name": "Gossypium",
+    "season": "Summer",
+    "growth_duration": "5-6 months",
+    "climate": "Warm, dry",
+    "description": "Cotton requires long frost-free periods and plenty of sunshine."
+  },
+  "Grapes": {
+    "scientific_name": "Vitis vinifera",
+    "season": "Late summer",
+    "growth_duration": "2-3 months",
+    "climate": "Temperate",
+    "description": "Grapes need well-drained soil and moderate rainfall."
+  },
+  "Jute": {
+    "scientific_name": "Corchorus olitorius",
+    "season": "Monsoon",
+    "growth_duration": "4-5 months",
+    "climate": "Tropical",
+    "description": "Jute grows well in warm and humid climates with plenty of water."
+  },
+  "Maize": {
+    "scientific_name": "Zea mays",
+    "season": "Summer",
+    "growth_duration": "3-4 months",
+    "climate": "Warm",
+    "description": "Maize requires fertile, well-drained soil and full sunlight."
+  },
+  "Mango": {
+    "scientific_name": "Mangifera indica",
+    "season": "Summer",
+    "growth_duration": "3-6 months",
+    "climate": "Tropical and subtropical",
+    "description": "Mango trees need a frost-free climate and well-drained soil."
+  },
+  "Millets": {
+    "scientific_name": "Various species",
+    "season": "Summer",
+    "growth_duration": "2-4 months",
+    "climate": "Dry and warm",
+    "description": "Millets are drought-resistant and grow well in poor soil."
+  },
+  "Orange": {
+    "scientific_name": "Citrus sinensis",
+    "season": "Winter",
+    "growth_duration": "7-12 months",
+    "climate": "Subtropical",
+    "description": "Oranges need plenty of sunshine and well-drained sandy soils."
+  },
+  "Paddy": {
+    "scientific_name": "Oryza sativa",
+    "season": "Kharif",
+    "growth_duration": "3-6 months",
+    "climate": "Warm and humid",
+    "description": "Paddy requires standing water and clayey soil."
+  },
+  "Papaya": {
+    "scientific_name": "Carica papaya",
+    "season": "Year-round",
+    "growth_duration": "6-12 months",
+    "climate": "Tropical",
+    "description": "Papayas need warm weather and well-drained soil."
+  },
+  "Sugarcane": {
+    "scientific_name": "Saccharum officinarum",
+    "season": "Summer",
+    "growth_duration": "10-18 months",
+    "climate": "Tropical and subtropical",
+    "description": "Sugarcane requires a lot of water and rich soil."
+  },
+  "Tea": {
+    "scientific_name": "Camellia sinensis",
+    "season": "Year-round",
+    "growth_duration": "3-5 years to mature",
+    "climate": "Tropical highlands",
+    "description": "Tea plants need acidic soil and frequent rainfall."
+  },
+  "Tomato": {
+    "scientific_name": "Solanum lycopersicum",
+    "season": "Spring and summer",
+    "growth_duration": "2-3 months",
+    "climate": "Warm",
+    "description": "Tomatoes require well-drained soil and plenty of sunlight."
+  },
+  "Wheat": {
+    "scientific_name": "Triticum aestivum",
+    "season": "Winter",
+    "growth_duration": "4-8 months",
+    "climate": "Cool and dry",
+    "description": "Wheat grows best in temperate zones with moderate rainfall."
+  }
+}
